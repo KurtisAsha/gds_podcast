@@ -17,10 +17,10 @@ theme_set(theme_minimal() +
                   strip.text = element_text(size = 12))
 )
 
-adj_sentiment_summary <- read_feather(path = "D:/R/gds_podcast/gds_podcast_app/df.feather")
+adj_sentiment_summary <- read_feather(path = "df.feather")
 episodes <- adj_sentiment_summary$episode_name
-characteristics <- read_feather(path = "D:/R/gds_podcast/gds_podcast_app/df_characteristics.feather")
-sentiment_change <- read_feather(path = "D:/R/gds_podcast/gds_podcast_app/df_sentiment_change.feather")
+characteristics <- read_feather(path = "df_characteristics.feather")
+sentiment_change <- read_feather(path = "df_sentiment_change.feather")
 
 ui <- fluidPage(
     
