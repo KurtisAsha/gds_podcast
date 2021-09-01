@@ -7,16 +7,9 @@ library(feather)
 
 theme_set(theme_minimal() + 
               theme(
-                  text = element_text(size = 12),
-                  axis.text.x = element_text(size = 12),
-                  axis.text.y = element_text(size = 12),
-                  axis.title.x = element_text(size = 12),
-                  axis.title.y = element_text(size = 12),
-                  plot.title = element_text(size = 16),
-                  plot.subtitle = element_text(size = 12),
-                  strip.text = element_text(size = 12))
-)
-
+                  text = element_text(size = 12, colour = "black"),
+                  plot.title = element_text(size = 16)))
+                 
 adj_sentiment_summary <- read_feather(path = "df.feather")
 episodes <- adj_sentiment_summary$episode_name
 characteristics <- read_feather(path = "df_characteristics.feather")
@@ -39,14 +32,16 @@ ui <- fluidPage(
                                 numericInput(
                                     inputId = "word_bin", 
                                     label = "Select number of word bins",
-                                    value = 30, 
-                                    min = 10, 
-                                    max = 100, 
+                                    value = 100, 
+                                    min = 50, 
+                                    max = 300, 
                                     step = 10
-                                )
+                                ), 
+                               h5("Word bins will group the text to analyse the number of positive and negative words")
                                 
                             ),
                             mainPanel(
+                                plotOutput("plot_trend_both"),
                                 plotOutput("plot_trend_one"), 
                                 plotOutput("plot_trend_all")
                                 
@@ -64,15 +59,13 @@ ui <- fluidPage(
                                 pickerInput(
                                     inputId = "episode_char",
                                     label = "Select episodes to display",
-                                    multiple = TRUE,
                                     choices = episodes,
-                                    selected = "An interview with Neil Williams",
-                                    options = list(`actions-box` = TRUE)
+                                    selected = "An interview with Neil Williams"
                                 )
                                 
                                 
                             ),
-                            mainPanel(  tags$style(type="text/css",
+                            mainPanel(tags$style(type="text/css",
                                                    ".shiny-output-error { visibility: hidden; }",
                                                    ".shiny-output-error:before { visibility: hidden; }"
                             ),
@@ -100,6 +93,36 @@ server <- function(input, output, session) {
     
     # Sentiment Tab
     
+    sentiment_both <- reactive({
+        
+        sentiment_change %>%
+            filter(episode_name %in% input$episode_trend) %>%
+            count(episode_name, index = row_number() %/% input$word_bin, sentiment) %>%
+            filter(sentiment != 0) %>% 
+            arrange(index) 
+        
+    })
+    
+    output$plot_trend_both <- renderPlot({
+        
+        ggplot(sentiment_both(), aes(index, n, colour = sentiment)) +
+            geom_line(size = 2) +
+            ggtitle(label = str_c("Sentiment frequencies per ",
+                                  input$word_bin,
+                                  " words"), 
+                    subtitle = input$episode_trend
+            ) +
+            theme(legend.position = "top", 
+                  legend.title = element_blank(), 
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank(), 
+                  ) +
+            xlab("Duration of episode") +
+            ylab("Sentiment frequencies") 
+        
+ 
+    })
+    
     sentiment_one <- reactive({
         
         sentiment_change %>%
@@ -107,22 +130,25 @@ server <- function(input, output, session) {
             count(episode_name, index = row_number() %/% input$word_bin, sentiment) %>%
             arrange(index) %>% 
             pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
-            mutate(sentiment = positive - negative)
+            mutate(sentiment = Positive - Negative)
         
     })
     
     output$plot_trend_one <- renderPlot({
         
         ggplot(sentiment_one(), aes(index, sentiment, fill = sentiment)) +
-            geom_col() +
-            ggtitle(label = str_c("Sentiment change of ",
-                                  input$episode_trend,
-                                  " per ",
-                                  input$word_bin,
-                                  " words")) +
-            theme(legend.position = "none") +
-            xlab("") +
-            ylab("")
+            geom_col()  +
+             ggtitle(label = str_c("Sentiment change per ",
+                                   input$word_bin,
+                                  " words"), 
+                    subtitle = input$episode_trend
+                                    ) +
+            theme(legend.position = "none", 
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank()) +
+            xlab("Duration of episode") +
+            ylab("Sentiment change (Positive - Negative)") 
+            
         
     })
     
@@ -132,21 +158,28 @@ server <- function(input, output, session) {
             count(index = row_number() %/% input$word_bin, sentiment) %>%
             arrange(index) %>% 
             pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) %>% 
-            mutate(sentiment = positive - negative)
+            mutate(sentiment = Positive - Negative)
         
     })
     
     output$plot_trend_all <- renderPlot({
         
         ggplot(sentiment_all(), aes(index, sentiment, fill = sentiment)) +
-            geom_smooth(se = FALSE, colour = "#325d88", method = 'loess', formula = 'y ~ x') +
-            ggtitle(label = str_c("All episodes sentiment change per ", input$word_bin, " words")) +
-            ggtitle(label = str_c("Sentiment change of all episodes per ",
+            geom_smooth(se = FALSE, 
+                        colour = "#325d88", 
+                        method = 'loess', 
+                        formula = 'y ~ x', 
+                        size = 2) +
+            ggtitle(label = str_c("Sentiment change per ",
                                   input$word_bin,
-                                  " words")) +
-            theme(legend.position = "none") +
-            xlab("") +
-            ylab("")
+                                  " words"), 
+                    subtitle = "All episodes"
+            ) +
+            theme(legend.position = "none", 
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank()) +
+            xlab("Duration of all episodes") +
+            ylab("Sentiment change (Positive - Negative)") 
     })
     
     # Characteristics Tab
@@ -158,9 +191,11 @@ server <- function(input, output, session) {
             coord_flip() +
             theme(legend.position = "none") +
             xlab("") +
-            ylab("Word Count") +
-            ggtitle(label = "Words characteristic of episodes") +
-            facet_wrap(~episode_name, ncol = 3, scales = "free_y")
+            ylab("Word frequencies") +
+            ggtitle(label = "Words characteristic of episode", 
+                    subtitle = input$episode_char)
+               
+            
     })
     
     output$plot <- renderPlot({
