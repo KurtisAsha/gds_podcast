@@ -10,7 +10,7 @@ theme_set(theme_minimal() +
                   text = element_text(size = 12, colour = "black"),
                   plot.title = element_text(size = 16)))
                  
-adj_sentiment_summary <- read_feather(path = "df.feather")
+adj_sentiment_summary <- read_feather(path = "df_summary.feather")
 episodes <- adj_sentiment_summary$episode_name
 characteristics <- read_feather(path = "df_characteristics.feather")
 sentiment_change <- read_feather(path = "df_sentiment_change.feather")

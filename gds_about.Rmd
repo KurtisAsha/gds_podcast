@@ -19,7 +19,9 @@ This data can be accessed via 3 tabs;
 **Treatment of data;**
 
 -   Stop words removed
+
 -   Podcast hosts and guests removed
+
 -   Sentiments with negation words like "not excited" have been reversed
 
 ### Acknowledgements
