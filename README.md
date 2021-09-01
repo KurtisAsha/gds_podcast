@@ -32,6 +32,6 @@ In developing and licensing for free the **bing** lexicon - [Bing Liu and collab
 
 ### Developer
 
-[**Github**](https://github.com/KurtisAsha) [**LinkedIn**](https://www.linkedin.com/in/kurtisashasmith/)
+[**LinkedIn**](https://www.linkedin.com/in/kurtisashasmith/)
 
 <img src="./www/zero_zero_one_circle.png" width="12%"/>
