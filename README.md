@@ -1,7 +1,5 @@
 ## GDS Podcast Text Analysis
 
-App \| [https://kurtisasha.shinyapps.io/gds_podcast](https://kurtisasha.shinyapps.io/gds_podcast/)
-
 ### Background
 
 The app explores the transcripts of the Government Digital Service podcast, analysing the text for sentiment and characteristics
