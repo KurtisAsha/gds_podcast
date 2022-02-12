@@ -4,11 +4,13 @@ library(shinyWidgets)
 library(shinythemes)
 library(tidyverse)
 library(feather)
+library(markdown)
 
 theme_set(theme_minimal() + 
               theme(
                   text = element_text(size = 12, colour = "black"),
-                  plot.title = element_text(size = 16)))
+                  plot.title = element_text(size = 16), 
+                  axis.text = element_text(size = 12)))
                  
 adj_sentiment_summary <- read_feather(path = "df_summary.feather")
 episodes <- adj_sentiment_summary$episode_name
@@ -78,11 +80,11 @@ ui <- fluidPage(
                
                tabPanel("About",
                         fluidRow(
-                            column(6, includeMarkdown("gds_about.Rmd"), 
-                                   img(src = "zero_zero_one_circle.png", 
-                                       height = 60, width = 60)
-                            )
-                            
+                          column(6, includeMarkdown("gds_about.Rmd"), 
+                                 img(src = "zero_zero_one_circle.png", 
+                                     height = 60, width = 60)
+                          )
+                          
                         )
                )
                

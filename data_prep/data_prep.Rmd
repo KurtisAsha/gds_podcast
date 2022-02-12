@@ -13,20 +13,22 @@ library(tidyverse)
 library(tidytext)
 library(feather)
 
-txt <- readxl::read_xlsx(path = 'D:/R/gds_podcast/data_prep/gds_podcast.xlsx',
+txt <- readxl::read_xlsx(path = 'C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/data_prep/gds_podcast.xlsx',
                          sheet = 'text',
                          col_names = TRUE, 
                          trim_ws = TRUE) %>% 
                   mutate(episode_number = as.integer(episode_number), 
-                         transcript = str_replace_all(transcript, "’", "'")) # Was stopping stop words removal in full
+                         transcript = str_replace_all(transcript, "’", ""), 
+                         transcript = str_replace_all(transcript, "'", "")) %>%  # Was stopping stop words removal in full
+                  select(-floor_date_released)
 
-characters <- readxl::read_xlsx(path = 'D:/R/gds_podcast/data_prep/gds_podcast.xlsx',
+characters <- readxl::read_xlsx(path = 'C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/data_prep/gds_podcast.xlsx',
                                 sheet = 'characters',
                                 col_names = TRUE, 
                                 trim_ws = TRUE) %>% 
               unnest_tokens("word", "character", token = "words") # Cleans name, helps removal from data
 
-negation_words <- readxl::read_xlsx(path = 'D:/R/gds_podcast/data_prep/gds_podcast.xlsx',
+negation_words <- readxl::read_xlsx(path = 'C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/data_prep/gds_podcast.xlsx',
                                 sheet = 'negation',
                                 col_names = TRUE, 
                                 trim_ws = TRUE) %>% 
@@ -35,7 +37,7 @@ negation_words <- readxl::read_xlsx(path = 'D:/R/gds_podcast/data_prep/gds_podca
 # Stop words
 
 custom_stop_words <- data.frame(
-  word = c("yeah"), 
+  word = c("yeah", "nah", "aww", "err", "um", "wed"), 
   lexicon = c("custom")
 )
 
@@ -55,6 +57,13 @@ tidy_gds <- txt %>%
          word = word.x) %>%
   anti_join(all_stop_words, by = "word") %>% 
   anti_join(characters, by = "word")
+
+# Complete stemmed words
+
+to_stem_words <- readxl::read_xlsx(path = 'C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/data_prep/gds_podcast.xlsx',
+                         sheet = 'stem',
+                         col_names = TRUE, 
+                         trim_ws = TRUE)
 
 ```
 
@@ -83,7 +92,7 @@ adj_sentiment_summary <- tidy_gds %>%
   ) %>% 
   select(episode_number, episode_name, word_count, everything())
 
-write_feather(adj_sentiment_summary, "D:/R/gds_podcast/df.feather")
+write_feather(adj_sentiment_summary, "C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/df_summary.feather")
 
 ```
 
@@ -92,13 +101,18 @@ Words Characteristic of Episodes
 ```{r}
 
 characteristics <- tidy_gds %>%
+  mutate(word = ifelse(word %in% to_stem_words$word, 
+                       yes = to_stem_words$word_stemmed, 
+                       no = word)) %>% 
   count(episode_number, episode_name, word, sort = TRUE) %>% 
   bind_tf_idf(word, episode_name, n) %>%
   arrange(episode_number, desc(tf_idf)) %>%
   group_by(episode_name) %>% 
-  slice_max(order_by = tf_idf, n = 15) 
+  slice_max(order_by = tf_idf, n = 5) 
 
-write_feather(characteristics, "D:/R/gds_podcast/df_characteristics.feather")
+characteristics %>% filter(episode_number == 36) # Check top 5 characteristics for potential stems
+
+write_feather(characteristics, "C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/df_characteristics.feather")
 
 ```
 
@@ -110,6 +124,53 @@ sentiment_change <- tidy_gds %>%
   mutate(sentiment = ifelse(is.na(sentiment), yes = 0, no = sentiment),
          sentiment = str_to_sentence(sentiment))
 
-write_feather(sentiment_change, "D:/R/gds_podcast/df_sentiment_change.feather")
+write_feather(sentiment_change, "C:/Users/Kurtissmith/Documents/R/projects/gds_podcast/df_sentiment_change.feather")
+
+rm(list = ls())
 
 ```
+
+
+Possible Improvements
+
+1. Done - Word stemming
+2. Add floor released date for exploratory questions (adding that statistical elemnet)
+3. Build a language model > train > and then given a topic tell it to spit something out
+4. Entity detection > pick out specific gov departments, costs, dates, eligability criteria
+
+```{r}
+# Exploratory Analysis point 2
+
+library(tidyverse)
+library(tidytext)
+library(feather)
+
+txt2 <- readxl::read_xlsx(path = 'D:/R/gds_podcast/data_prep/gds_podcast.xlsx',
+                         sheet = 'text',
+                         col_names = TRUE, 
+                         trim_ws = TRUE) %>% 
+                  mutate(episode_number = as.integer(episode_number), 
+                         transcript = str_replace_all(transcript, "’", "'")) %>%  # Was stopping stop words removal in full
+                  select(-floor_date_released)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

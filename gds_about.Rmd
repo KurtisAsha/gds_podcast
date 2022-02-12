@@ -1,8 +1,15 @@
+---
+title: "About"
+runtime: shiny
+---
+
 ## GDS Podcast Text Analysis
 
 ### Background
 
 The app explores the transcripts of the Government Digital Service podcast, analysing the text for sentiment and characteristics
+
+Language analysed - English 
 
 ### Usage
 
